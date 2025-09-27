@@ -1,4 +1,6 @@
 -- Goal: Find the average trip length in minutes per weekday
+-- Using the date_dimension table to get day of the week is not ideal 
+-- since it an additional table for the time would be unnecessary and slower to parse
 SELECT
     DAYNAME(STR_TO_DATE(tpep_pickup_datetime, '%c/%e/%Y %l:%i %p')) AS weekday,
     COUNT(*) AS trip_count,
