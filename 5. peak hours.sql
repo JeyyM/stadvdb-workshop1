@@ -1,25 +1,27 @@
 -- What are the peak hours per vendor per month? (NAIVE)
 SELECT 
     r.VendorID,
-    YEAR(STR_TO_DATE(r.tpep_pickup_datetime, '%Y-%m-%d %H:%i:%s')) AS trip_year,
-    MONTH(STR_TO_DATE(r.tpep_pickup_datetime, '%Y-%m-%d %H:%i:%s')) AS trip_month,
+    dd.tripYear AS trip_year,
+    dd.tripMonth AS trip_month,
     HOUR(STR_TO_DATE(r.tpep_pickup_datetime, '%Y-%m-%d %H:%i:%s')) AS trip_hour,
     COUNT(*) AS trip_count
 FROM taxi_route_details r
-GROUP BY r.VendorID, trip_year, trip_month, trip_hour
-ORDER BY trip_year, trip_month, trip_count DESC;
+JOIN date_dimension dd ON r.tripID = dd.tripID
+GROUP BY r.VendorID, dd.tripYear, dd.tripMonth, trip_hour
+ORDER BY dd.tripYear, dd.tripMonth, trip_count DESC;
 
 -- What are the peak hours per vendor per month? (OPTIMIZED)
 SELECT *
 FROM (
     SELECT 
         r.VendorID,
-        DATE_FORMAT(STR_TO_DATE(r.tpep_pickup_datetime, '%Y-%m-%d %H:%i:%s'), '%Y-%m') AS trip_month,
+        CONCAT(dd.tripYear, '-', LPAD(dd.tripMonth, 2, '0')) AS trip_month,
         HOUR(STR_TO_DATE(r.tpep_pickup_datetime, '%Y-%m-%d %H:%i:%s')) AS trip_hour,
         COUNT(*) AS trip_count,
-        ROW_NUMBER() OVER (PARTITION BY r.VendorID, DATE_FORMAT(STR_TO_DATE(r.tpep_pickup_datetime, '%Y-%m-%d %H:%i:%s'), '%Y-%m')
+        ROW_NUMBER() OVER (PARTITION BY r.VendorID, dd.tripYear, dd.tripMonth
                            ORDER BY COUNT(*) DESC) AS rn
     FROM taxi_route_details r
-    GROUP BY r.VendorID, trip_month, trip_hour
+    JOIN date_dimension dd ON r.tripID = dd.tripID
+    GROUP BY r.VendorID, dd.tripYear, dd.tripMonth, trip_hour
 ) ranked
 WHERE rn = 1;
