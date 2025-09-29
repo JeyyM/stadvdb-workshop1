@@ -1,10 +1,9 @@
 -- Goal: Find which day of the week has the most number of trips
--- Using the date_dimension table to get day of the week is not ideal 
--- since it would result in additional processes
 
 SELECT 
-    DAYNAME(STR_TO_DATE(tpep_pickup_datetime, '%c/%e/%Y %l:%i %p')) AS weekdays,
+    DAYNAME(DATE(CONCAT(dd.tripYear, '-', dd.tripMonth, '-', dd.tripDay))) AS weekdays,
     COUNT(*) AS trip_count
-FROM taxi_schema.taxi_route_details
-GROUP BY DAYNAME(STR_TO_DATE(tpep_pickup_datetime, '%c/%e/%Y %l:%i %p'))
+FROM taxi_schema.taxi_route_details trd
+JOIN date_dimension dd ON trd.tripID = dd.tripID
+GROUP BY DAYNAME(DATE(CONCAT(dd.tripYear, '-', dd.tripMonth, '-', dd.tripDay)))
 ORDER BY trip_count DESC
